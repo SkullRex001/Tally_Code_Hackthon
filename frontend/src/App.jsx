@@ -136,7 +136,8 @@ function App() {
   }, [selectedFile]);
 
   const runCodeFunction = async ()=>{
-    const response = await fetch('http://localhost:8000/run');
+    const response = await fetch(`http://localhost:8000/run?path=.${selectedFile}`);
+    console.log(selectedFile);
     const data = await response.json();
 
     setOutput(data.data)

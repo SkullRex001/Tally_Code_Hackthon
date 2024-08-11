@@ -101,7 +101,12 @@ app.get('/files/content' , async (req , res)=>{
 
 app.get('/run', async (req, res) => {
     try {
-        const data = await init();
+        const cmdPath = req.query.path;
+        if (!cmdPath) {
+            throw new Error("Path query parameter is missing");
+        }
+        console.log(`Received path: ${cmdPath}`);
+        const data = await init3(cmdPath);
         console.log(data);
 
         res.json({
@@ -199,20 +204,142 @@ async function generateExplorerTree4(directory) {
 
 
 
-const init = () => {
+const init = (path) => {
     return new Promise((resolve, reject) => {
         console.log("SCRIPT RUNNING");
+
+        console.log(path)
+
+        const sanitizedPath = path.replace(/['"]/g, '');
 
         // Use path.resolve to get the absolute path
         const rootDir = path.resolve(__dirname, 'User');
 
         // Construct the command to execute
-        const command = `cd ${rootDir} && node index.js`;
+        const command = `cd ${rootDir} && ${sanitizedPath}`;
 
         // Execute the command
         const p = exec(command);
 
         console.log("Executing command:", command);
+
+        let stdoutData = '';
+        let stderrData = '';
+
+        p.stdout.on('data', (data) => {
+            stdoutData += data.toString();
+        });
+
+        p.stderr.on('data', (data) => {
+            stderrData += data.toString();
+        });
+
+        p.on('close', (code) => {
+            if (code === 0) {
+                resolve({ stdout: stdoutData });
+            } else {
+                reject({ stderr: stderrData });
+            }
+            console.log(`Process exited with code ${code}`);
+            console.log('BUILD COMPLETE');
+        });
+
+        p.on('error', (err) => {
+            reject(err);
+            console.error('Failed to start subprocess:', err);
+        });
+    });
+};
+
+//test function2
+
+const init2 = (cmdPath) => {
+    return new Promise((resolve, reject) => {
+        console.log("SCRIPT RUNNING");
+        console.log(cmdPath);
+        const sanitizedPath = cmdPath.replace(/['"]/g, '');
+        const rootDir = path.resolve(__dirname, 'User');
+        const filepath = path.join(rootDir , sanitizedPath)
+        const command = `cd ${filepath}`;
+        console.log("PATH " ,  command)
+        const p = exec(command);
+
+        console.log("Executing command:", command);
+
+        let stdoutData = '';
+        let stderrData = '';
+
+        p.stdout.on('data', (data) => {
+            stdoutData += data.toString();
+        });
+
+        p.stderr.on('data', (data) => {
+            stderrData += data.toString();
+        });
+
+        p.on('close', (code) => {
+            if (code === 0) {
+                resolve({ stdout: stdoutData });
+            } else {
+                reject({ stderr: stderrData });
+            }
+            console.log(`Process exited with code ${code}`);
+            console.log('BUILD COMPLETE');
+        });
+
+        p.on('error', (err) => {
+            reject(err);
+            console.error('Failed to start subprocess:', err);
+        });
+    });
+};
+
+// app.get('/run', async (req, res) => {
+//     try {
+//         const cmdPath = req.query.path;
+//         const data = await init(cmdPath);
+//         console.log(data);
+
+//         res.json({
+//             data: data.stdout
+//         });
+//     } catch (error) {
+//         console.log(error);
+
+//         res.json({
+//             data: String(error.stderr)
+//         });
+//     }
+// });
+
+
+
+const init3 = (cmdPath) => {
+    return new Promise((resolve, reject) => {
+        console.log("SCRIPT RUNNING");
+
+        if (!cmdPath) {
+            reject(new Error("Path parameter is missing"));
+            return;
+        }
+
+        console.log(cmdPath);
+
+        const sanitizedPath = cmdPath.replace(/['"]/g, '');
+
+     
+        const rootDir = path.resolve(__dirname, 'User');
+        const filePath = path.join(rootDir, sanitizedPath);
+
+     
+        const command = `cd ${rootDir} && node ${sanitizedPath}`;
+
+        console.log("CD command " , command)
+
+        console.log("Executing command:", command);
+
+
+        const p = exec(command);
 
         let stdoutData = '';
         let stderrData = '';

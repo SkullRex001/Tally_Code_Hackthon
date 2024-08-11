@@ -6,6 +6,7 @@ const mySum = ()=>{
     console.log("HARSH")
     let a = 10;
     console.log(a);
+    console.log("hii")
   return 2+2;
 }
 
