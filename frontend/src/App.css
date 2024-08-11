@@ -48,10 +48,10 @@
 
 .editors{
   display: flex;
+  height: 100%;
 }
 
 
-/* CSS */
 .button-31 {
   background-color: #292929;
   border-radius: 4px;
@@ -60,7 +60,7 @@
   color: #fff;
   cursor: pointer;
   display: inline-block;
-  font-family: "Farfetch Basis","Helvetica Neue",Arial,sans-serif;
+  font-family: "Farfetch Basis", "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
@@ -71,16 +71,25 @@
   outline: none;
   overflow: hidden;
   padding: 9px 20px 8px;
-  position: relative;
+  position: absolute;
   text-align: center;
   text-transform: none;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-  width: 100%;
+  width: auto; /* Changed from 100% to auto */
+  z-index: 99;
+  bottom: 0%;
+  left: 50%;
+   /* Center the button horizontally */
+  transform: translateX(-50%); /* Adjust position to center */
 }
 
 .button-31:hover,
 .button-31:focus {
   opacity: .75;
+}
+
+.outputClass{
+  position: relative;
 }

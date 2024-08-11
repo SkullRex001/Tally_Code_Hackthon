@@ -105,15 +105,13 @@ app.get('/run', async (req, res) => {
         console.log(data);
 
         res.json({
-            success: true,
-            data
+            data : data.stdout
         });
     } catch (error) {
         console.log(error);
 
         res.json({
-            success: false,
-            error
+            data : String(error.stderr)
         });
     }
 });

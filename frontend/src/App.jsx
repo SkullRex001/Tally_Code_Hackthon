@@ -3,6 +3,7 @@ import Terminal from './components/Terminal'
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/theme-twilight";
 import "ace-builds/src-noconflict/ext-language_tools";
 import { useCallback, useEffect, useState } from 'react';
 import Folder from './components/Folder';
@@ -11,7 +12,7 @@ import socket from './socket';
 
 function App() {
 
-  const [output , setOutput] = useState({});
+  const [output , setOutput] = useState('');
 
   const [file, setFileTress] = useState({});
   const [selectedFile, setSelectedFile] = useState('')
@@ -138,7 +139,7 @@ function App() {
     const response = await fetch('http://localhost:8000/run');
     const data = await response.json();
 
-    setOutput(data)
+    setOutput(data.data)
 
   }
 
@@ -191,12 +192,15 @@ function App() {
 
                 /> 
 
+                <div className='outputClass'>
+
                 <div className='output'>
                   <button className='button-31' onClick={runCodeFunction}>RUN</button>
 
-                <AceEditor height='64vh' value={JSON.stringify(output)}/>
+                <AceEditor height='70vh' value={output ? output: ""} theme='twilight'/>
                 </div>
 
+                </div>
                 </div>
                 
                 </>) : <div className='welcome'>
