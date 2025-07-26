@@ -71,6 +71,10 @@ io.on('disconnect' , ()=>{
     console.log("hoo")
 })
 
+app.get('/health' , (req , res)=>{
+    res.status(200).json({message : "Everything is good🤗"})
+})
+
 app.get('/files' ,async (req , res)=>{
 
     const fileTree = await generateExplorerTree4('./User')

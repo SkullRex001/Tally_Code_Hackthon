@@ -7,7 +7,15 @@ const mySum = ()=>{
     let a = 10;
     console.log(a);
     console.log("hii")
-  return 2+2;
+    console.log("test")
+    console.log("test2")
+    console.log("Tushar")
+    console.log("AVSS")
+    
+ 
+  return
+  
 }
+
 
 mySum();

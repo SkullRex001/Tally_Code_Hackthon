@@ -79,7 +79,7 @@ function App() {
           path: cleanedPath,
           content: code
         })
-      }, 5 * 1000);
+      }, 2 * 1000);
       return () => {
         clearTimeout(timer)
       }
