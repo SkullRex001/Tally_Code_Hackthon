@@ -1,106 +1,42 @@
-const http = require('http');
-const express = require('express');
-const pty = require('node-pty');
 const fs = require('fs/promises');
-const path = require('path');
-const cors = require('cors')
-const chokidar = require('chokidar');
-const { exec } = require('child_process');
-const os = require('os')
+const { ptyProcess } = require('./utils/shell-process');
+const { app, io } = require('./utils/server')
+const { setupSocket } = require('./utils/socket')
+const { generateExplorerTree, init } = require('./utils/file-methods')
 
 
-var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+setupSocket(io, ptyProcess);
 
-const {Server:wsServer} = require('socket.io');
-
-console.log(process.env.INIT_CWD);
-
-var ptyProcess = pty.spawn('bash', [], {
-    name: 'xterm-color',
-    cols: 80,
-    rows: 30,
-    cwd: './User',
-    env: process.env
-  });
-  
-
-const app = express();
-
-
-app.use(cors());
-
-const server = http.createServer(app);
-
-const io = new wsServer({
-    cors : {
-        origin : "*"
-    }
-});
-
-io.attach(server);
-
-chokidar.watch('./User').on('all', (event, path) => {
-    io.emit('file:refresh' , path)
-  });
-
-ptyProcess.onData(data => {
-
-    io.emit('terminal:data', data)
+app.get('/health', (req, res) => {
+    res.status(200).json({ message: "Everything is good🤗" })
 })
 
-io.on('connection' , (socket)=>{
-    console.log(socket.id);
+app.get('/files', async (req, res) => {
 
-    socket.on('terminal:write' , (data)=>{
-        ptyProcess.write(data);
-    })
-    socket.on('file:change' , async ({path , content})=>{
-        console.log(content)
-        try{
-            await fs.writeFile(`./User${path}` , content)
-
-        }
-        catch(err){
-            console.log(JSON.stringify(err))
-        }
-       
-    } )
-})
-
-io.on('disconnect' , ()=>{
-    console.log("hoo")
-})
-
-app.get('/health' , (req , res)=>{
-    res.status(200).json({message : "Everything is good🤗"})
-})
-
-app.get('/files' ,async (req , res)=>{
-
-    const fileTree = await generateExplorerTree4('./User')
-    return res.json({tree : fileTree});
+    const fileTree = await generateExplorerTree('./User')
+    return res.json({ tree: fileTree });
 
 })
 
-app.get('/files/content' , async (req , res)=>{
+app.get('/files/content', async (req, res) => {
 
-    try{
+    try {
         const path = req.query.path;
         const sanitizedPath = path.replace(/['"]/g, '');
 
-    console.log("PATH : " , path)
-    const content = await fs.readFile(`./User${sanitizedPath}` , 'utf-8')
-    console.log(content)
-    return res.json({content})
+        console.log("PATH : ", path)
+        const content = await fs.readFile(`./User${sanitizedPath}`, 'utf-8')
+        console.log(content)
+        return res.json({ content })
 
     }
-    catch(err){
+    catch (err) {
         res.json({
-            message : "OOPS"
+            message: "OOPS"
         })
         console.log(err)
     }
-    
+
 })
 
 app.get('/run', async (req, res) => {
@@ -110,265 +46,17 @@ app.get('/run', async (req, res) => {
             throw new Error("Path query parameter is missing");
         }
         console.log(`Received path: ${cmdPath}`);
-        const data = await init3(cmdPath);
+        const data = await init(cmdPath);
         console.log(data);
 
         res.json({
-            data : data.stdout
+            data: data.stdout
         });
     } catch (error) {
         console.log(error);
 
         res.json({
-            data : String(error.stderr)
+            data: String(error.stderr)
         });
     }
 });
-
-server.listen(8000 , ()=> console.log("Server on") )
-
-
-// async function generateFileTree(directory) {
-//     const tree = {};
-
-//     async function buildTree(currentDir, currentTree) {
-//         const files = await fs.readdir(currentDir, { withFileTypes: true });
-
-//         for (const file of files) {
-//             const filePath = path.join(currentDir, file.name);
-//             if (file.isDirectory()) {
-//                 currentTree[file.name] = {};
-//                 await buildTree(filePath, currentTree[file.name]);
-//             } else {
-//                 currentTree[file.name] = null;
-//             }
-//         }
-//     }
-
-//     await buildTree(directory, tree);
-//     return tree;
-// }
-
-
-// async function generateFolderTree3(directory) {
-//     async function buildTree(currentDir) {
-//         const files = await fs.readdir(currentDir, { withFileTypes: true });
-//         const tree = [];
-
-//         for (const file of files) {
-//             const filePath = path.join(currentDir, file.name);
-//             if (file.isDirectory()) {
-//                 tree.push({
-//                     name: file.name,
-//                     children: await buildTree(filePath)
-//                 });
-//             } else {
-//                 tree.push({
-//                     name: file.name,
-//                     children: null
-//                 });
-//             }
-//         }
-
-//         return tree;
-//     }
-
-//     return buildTree(directory);
-// }
-
-async function generateExplorerTree4(directory) {
-    let idCounter = 1;
-
-    async function buildTree(currentDir) {
-        const files = await fs.readdir(currentDir, { withFileTypes: true });
-        const tree = [];
-
-        for (const file of files) {
-            const filePath = path.join(currentDir, file.name);
-            const node = {
-                id: (idCounter++).toString(),
-                name: file.name,
-                isFolder: file.isDirectory(),
-                items: file.isDirectory() ? await buildTree(filePath) : []
-            };
-            tree.push(node);
-        }
-
-        return tree;
-    }
-
-    return {
-        id: (idCounter++).toString(),
-        name: path.basename(directory),
-        isFolder: true,
-        items: await buildTree(directory)
-    };
-}
-
-
-
-
-const init = (path) => {
-    return new Promise((resolve, reject) => {
-        console.log("SCRIPT RUNNING");
-
-        console.log(path)
-
-        const sanitizedPath = path.replace(/['"]/g, '');
-
-        // Use path.resolve to get the absolute path
-        const rootDir = path.resolve(__dirname, 'User');
-
-        // Construct the command to execute
-        const command = `cd ${rootDir} && ${sanitizedPath}`;
-
-        // Execute the command
-        const p = exec(command);
-
-        console.log("Executing command:", command);
-
-        let stdoutData = '';
-        let stderrData = '';
-
-        p.stdout.on('data', (data) => {
-            stdoutData += data.toString();
-        });
-
-        p.stderr.on('data', (data) => {
-            stderrData += data.toString();
-        });
-
-        p.on('close', (code) => {
-            if (code === 0) {
-                resolve({ stdout: stdoutData });
-            } else {
-                reject({ stderr: stderrData });
-            }
-            console.log(`Process exited with code ${code}`);
-            console.log('BUILD COMPLETE');
-        });
-
-        p.on('error', (err) => {
-            reject(err);
-            console.error('Failed to start subprocess:', err);
-        });
-    });
-};
-
-//test function2
-
-const init2 = (cmdPath) => {
-    return new Promise((resolve, reject) => {
-        console.log("SCRIPT RUNNING");
-        console.log(cmdPath);
-        const sanitizedPath = cmdPath.replace(/['"]/g, '');
-        const rootDir = path.resolve(__dirname, 'User');
-        const filepath = path.join(rootDir , sanitizedPath)
-        const command = `cd ${filepath}`;
-        console.log("PATH " ,  command)
-        const p = exec(command);
-
-        console.log("Executing command:", command);
-
-        let stdoutData = '';
-        let stderrData = '';
-
-        p.stdout.on('data', (data) => {
-            stdoutData += data.toString();
-        });
-
-        p.stderr.on('data', (data) => {
-            stderrData += data.toString();
-        });
-
-        p.on('close', (code) => {
-            if (code === 0) {
-                resolve({ stdout: stdoutData });
-            } else {
-                reject({ stderr: stderrData });
-            }
-            console.log(`Process exited with code ${code}`);
-            console.log('BUILD COMPLETE');
-        });
-
-        p.on('error', (err) => {
-            reject(err);
-            console.error('Failed to start subprocess:', err);
-        });
-    });
-};
-
-// app.get('/run', async (req, res) => {
-//     try {
-//         const cmdPath = req.query.path;
-//         const data = await init(cmdPath);
-//         console.log(data);
-
-//         res.json({
-//             data: data.stdout
-//         });
-//     } catch (error) {
-//         console.log(error);
-
-//         res.json({
-//             data: String(error.stderr)
-//         });
-//     }
-// });
-
-
-
-const init3 = (cmdPath) => {
-    return new Promise((resolve, reject) => {
-        console.log("SCRIPT RUNNING");
-
-        if (!cmdPath) {
-            reject(new Error("Path parameter is missing"));
-            return;
-        }
-
-        console.log(cmdPath);
-
-        const sanitizedPath = cmdPath.replace(/['"]/g, '');
-
-     
-        const rootDir = path.resolve(__dirname, 'User');
-        const filePath = path.join(rootDir, sanitizedPath);
-
-     
-        const command = `cd ${rootDir} && node ${sanitizedPath}`;
-
-        console.log("CD command " , command)
-
-        console.log("Executing command:", command);
-
-
-        const p = exec(command);
-
-        let stdoutData = '';
-        let stderrData = '';
-
-        p.stdout.on('data', (data) => {
-            stdoutData += data.toString();
-        });
-
-        p.stderr.on('data', (data) => {
-            stderrData += data.toString();
-        });
-
-        p.on('close', (code) => {
-            if (code === 0) {
-                resolve({ stdout: stdoutData });
-            } else {
-                reject({ stderr: stderrData });
-            }
-            console.log(`Process exited with code ${code}`);
-            console.log('BUILD COMPLETE');
-        });
-
-        p.on('error', (err) => {
-            reject(err);
-            console.error('Failed to start subprocess:', err);
-        });
-    });
-};

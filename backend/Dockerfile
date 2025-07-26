@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-# 🧰 Install dependencies for node-gyp to build native modules
+# Install dependencies for node-gyp to build native modules
 RUN apk add --no-cache bash python3 make g++
 
 # Set working directory
