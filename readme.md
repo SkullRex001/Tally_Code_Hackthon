@@ -7,7 +7,7 @@
 ### **THIS IS HOW WE HAVE DEPLOYED IT**
 
 
-<img width="3558" height="2085" alt="Image" src="https://github.com/user-attachments/assets/5ad2ed66-5ef4-469c-89a3-fdaa6d40f411" />
+<img width="3558" height="2335" alt="Image" src="https://github.com/user-attachments/assets/fe35ac22-9ef6-4e0a-8faa-54d5b333ecb6" />
 
 
 
