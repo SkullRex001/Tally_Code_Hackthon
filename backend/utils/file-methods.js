@@ -3,7 +3,7 @@ const path = require('path');
 const { exec } = require('child_process');
 
 
-
+//Building file Tree
 async function generateExplorerTree(directory) {
     let idCounter = 1;
 
@@ -34,31 +34,20 @@ async function generateExplorerTree(directory) {
 }
 
 
-
-const init= (cmdPath) => {
+//run button
+const init = (selectedFilePath) => {
     return new Promise((resolve, reject) => {
-        console.log("SCRIPT RUNNING");
 
-        if (!cmdPath) {
+        if (!selectedFilePath) {
             reject(new Error("Path parameter is missing"));
             return;
         }
 
-        console.log(cmdPath);
+        const sanitizedPath = selectedFilePath.replace(/['"]/g, '');
 
-        const sanitizedPath = cmdPath.replace(/['"]/g, '');
-
-     
         const rootDir = path.resolve(__dirname, '../User');
-        const filePath = path.join(rootDir, sanitizedPath);
 
-     
         const command = `cd ${rootDir} && node ${sanitizedPath}`;
-
-        console.log("CD command " , command)
-
-        console.log("Executing command:", command);
-
 
         const p = exec(command);
 
@@ -79,8 +68,6 @@ const init= (cmdPath) => {
             } else {
                 reject({ stderr: stderrData });
             }
-            console.log(`Process exited with code ${code}`);
-            console.log('BUILD COMPLETE');
         });
 
         p.on('error', (err) => {
@@ -91,4 +78,4 @@ const init= (cmdPath) => {
 };
 
 
-module.exports = {generateExplorerTree , init};
+module.exports = { generateExplorerTree, init };

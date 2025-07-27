@@ -18,7 +18,6 @@ function setupSocket(io, ptyProcess) {
     });
 
     socket.on('file:change', async ({ path, content }) => {
-      console.log(content);
       await fs.writeFile(`./User${path}`, content);
     });
 

@@ -4,20 +4,24 @@ const cors = require('cors');
 const { Server: wsServer } = require('socket.io');
 
 const app = express();
-app.use(cors());
-
-const server = http.createServer(app);
-
 const io = new wsServer({
-  cors: {
-    origin: '*',
-  },
+    cors: {
+        origin: '*',
+    },
 });
 
-io.attach(server);
+const startServer = (port) => {
+    app.use(cors());
 
-server.listen(8000, () => {
-  console.log('Server on');
-});
+    const server = http.createServer(app);
 
-module.exports = {app , io}
+    io.attach(server);
+
+    server.listen(port, () => {
+        console.log('Server on');
+    });
+
+}
+
+
+module.exports = { app, io ,startServer}

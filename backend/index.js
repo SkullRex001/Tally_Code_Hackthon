@@ -1,9 +1,11 @@
 const fs = require('fs/promises');
 const { ptyProcess } = require('./utils/shell-process');
-const { app, io } = require('./utils/server')
+const { app, io, startServer } = require('./utils/server')
 const { setupSocket } = require('./utils/socket')
 const { generateExplorerTree, init } = require('./utils/file-methods')
 
+
+startServer(8000);
 
 setupSocket(io, ptyProcess);
 
@@ -23,10 +25,7 @@ app.get('/files/content', async (req, res) => {
     try {
         const path = req.query.path;
         const sanitizedPath = path.replace(/['"]/g, '');
-
-        console.log("PATH : ", path)
         const content = await fs.readFile(`./User${sanitizedPath}`, 'utf-8')
-        console.log(content)
         return res.json({ content })
 
     }
@@ -41,13 +40,11 @@ app.get('/files/content', async (req, res) => {
 
 app.get('/run', async (req, res) => {
     try {
-        const cmdPath = req.query.path;
-        if (!cmdPath) {
+        const selectedFilePath = req.query.path;
+        if (!selectedFilePath) {
             throw new Error("Path query parameter is missing");
         }
-        console.log(`Received path: ${cmdPath}`);
-        const data = await init(cmdPath);
-        console.log(data);
+        const data = await init(selectedFilePath);
 
         res.json({
             data: data.stdout
