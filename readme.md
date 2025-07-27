@@ -2,7 +2,7 @@
 
 **VIDEO DEMO** :- https://www.youtube.com/watch?v=3oODFEEib7c
 
-1) _Beautiful and Simple UI_
+<!-- 1) _Beautiful and Simple UI_
 ![Screenshot (4852)](https://github.com/user-attachments/assets/3fbc9384-929d-43a9-85fe-9c3bbdae866f)
 
 2) _One click run button_
@@ -20,7 +20,10 @@
    
 ![Screenshot 2024-08-11 121405](https://github.com/user-attachments/assets/474e100c-122f-420e-addb-00b73ef9f4ff)
 
-5) **We provide you the ability to make any project in our playground**
+5) **We provide you the ability to make any project in our playground** -->
+<img width="2418" height="1114" alt="Image" src="https://github.com/user-attachments/assets/787f8dcd-44fb-4940-957f-48f85bfc729b" />
+
+
 
 
 ### **HOW TO SETUP THE PROJECT LOCALLY**
@@ -64,8 +67,8 @@ This document provides instructions to run the project in two ways:
 
 1. **Clone the Repository**
    ```bash
-   git clone <your-repo-url>
-   cd <your-project-folder>
+   git clone <https://github.com/SkullRex001/Tally_Code_Hackthon.git>
+   cd <Tally_Code_Hackthon>
    ```
 
 2. **Build Docker Image (Backend)**
