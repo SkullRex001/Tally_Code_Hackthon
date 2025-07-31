@@ -7,7 +7,7 @@ const app = express();
 const io = new wsServer({
     cors: {
         origin: '*',
-    },
+    }
 });
 
 const startServer = (port) => {

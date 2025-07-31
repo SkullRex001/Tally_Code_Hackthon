@@ -3,6 +3,9 @@ const { ptyProcess } = require('./utils/shell-process');
 const { app, io, startServer } = require('./utils/server')
 const { setupSocket } = require('./utils/socket')
 const { generateExplorerTree, init } = require('./utils/file-methods')
+const { clerkClient, requireAuth, getAuth } = require("@clerk/express")
+require('dotenv').config()
+
 
 
 startServer(8000);
@@ -13,14 +16,14 @@ app.get('/health', (req, res) => {
     res.status(200).json({ message: "Everything is good🤗" })
 })
 
-app.get('/files', async (req, res) => {
+app.get('/files', requireAuth(), async (req, res) => {
 
     const fileTree = await generateExplorerTree('./User')
     return res.json({ tree: fileTree });
 
 })
 
-app.get('/files/content', async (req, res) => {
+app.get('/files/content', requireAuth(), async (req, res) => {
 
     try {
         const path = req.query.path;
@@ -38,7 +41,7 @@ app.get('/files/content', async (req, res) => {
 
 })
 
-app.get('/run', async (req, res) => {
+app.get('/run', requireAuth(), async (req, res) => {
     try {
         const selectedFilePath = req.query.path;
         if (!selectedFilePath) {

@@ -1,0 +1,57 @@
+.signup-container {
+  background-color: #121212;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.heading {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.heading span {
+  color: #00d8ff;
+}
+
+.auth-buttons, .signed-in-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  background-color: #1e1e1e;
+  border: 1px solid #00d8ff;
+  color: #00d8ff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn:hover {
+  background-color: #00d8ff;
+  color: #121212;
+}
+
+.logout {
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.logout:hover {
+  background-color: #f44336;
+  color: white;
+}
+
+.signed-in-info {
+  text-align: center;
+}
