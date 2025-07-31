@@ -1,37 +1,56 @@
-import {Terminal as XTerminal} from '@xterm/xterm'
-import { useEffect , useRef } from 'react'
-import '@xterm/xterm/css/xterm.css'
-import socket from '../socket'
-
+import { Terminal as XTerminal } from '@xterm/xterm';
+import { useEffect, useRef } from 'react';
+import '@xterm/xterm/css/xterm.css';
+import useSecureSocket from '../socket';
 
 const Terminal = () => {
+  const socket = useSecureSocket();
+  const terminalRef = useRef(null);
+  const termRef = useRef(null);
 
-    const terminalRef = useRef();
-    const isRendered = useRef(false);
+  useEffect(() => {
+    if (!socket || !terminalRef.current) return;
 
-    useEffect(()=>{
-        if(isRendered.current) return;
-        isRendered.current = true;
-        const term = new XTerminal({
-            rows : 20,
-        });
-        term.open(terminalRef.current);
-        term.onData((data) => {
-            socket.emit("terminal:write" , data);
-        })
+    const term = new XTerminal({
+      rows: 20,
+      cursorBlink: true,
+      theme: {
+        background: '#1e1e1e',
+        foreground: '#ffffff',
+      },
+    });
 
-        socket.on("terminal:data" , (data)=>{
-            console.log(data);
-            term.write(data);
-        })
+    termRef.current = term;
+    term.open(terminalRef.current);
+    term.focus();
 
-        
-    } , [])
+    term.onData(data => {
+      socket.emit('terminal:write', data);
+    });
 
+    const handleServerData = data => {
+      term.write(data);
+    };
+
+    socket.on('terminal:data', handleServerData);
+
+    return () => {
+      term.dispose();
+      socket.off('terminal:data', handleServerData);
+    };
+  }, [socket]);
 
   return (
-    <div ref={terminalRef} id='terminal'></div>
-  )
-}
+    <div
+      ref={terminalRef}
+      id="terminal"
+      style={{
+        height: '400px',
+        backgroundColor: '#1e1e1e',
+        overflow: 'hidden',
+      }}
+    />
+  );
+};
 
-export default Terminal
+export default Terminal;

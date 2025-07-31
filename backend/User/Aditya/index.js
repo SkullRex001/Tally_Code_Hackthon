@@ -4,3 +4,4 @@ const fun = ()=>{
 
 fun();
 fun();
+fun();

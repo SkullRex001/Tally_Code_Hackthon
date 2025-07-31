@@ -8,10 +8,16 @@ import {
   SignUpButton,
   useUser,
 } from '@clerk/clerk-react';
-import './Signup.css'; // Import the CSS
+import './Signup.css'; 
+import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
   const { user } = useUser();
+    const navigate = useNavigate();
+
+  const handleRedirect = () => {
+    navigate('/projects');
+  };
 
   return (
     <div className="signup-container">
@@ -36,6 +42,7 @@ const Signup = () => {
             <SignOutButton>
               <button className="btn logout">Sign Out</button>
             </SignOutButton>
+            <button className='btn logout' onClick={handleRedirect}>Projects</button>
           </div>
         </div>
       </SignedIn>

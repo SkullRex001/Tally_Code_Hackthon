@@ -35,21 +35,17 @@ async function generateExplorerTree(directory) {
 
 
 //run button
-const init = (selectedFilePath) => {
+const init = (fullFilePath) => {
     return new Promise((resolve, reject) => {
-
-        if (!selectedFilePath) {
+        if (!fullFilePath) {
             reject(new Error("Path parameter is missing"));
             return;
         }
 
-        const sanitizedPath = selectedFilePath.replace(/['"]/g, '');
+        console.log(fullFilePath)
 
-        const rootDir = path.resolve(__dirname, '../User');
-
-        const command = `cd ${rootDir} && node ${sanitizedPath}`;
-
-        const p = exec(command);
+        const command = `node ${fullFilePath}`;
+        const p = exec(command );//add {timeout : 4000} 4 sec
 
         let stdoutData = '';
         let stderrData = '';
@@ -76,6 +72,5 @@ const init = (selectedFilePath) => {
         });
     });
 };
-
 
 module.exports = { generateExplorerTree, init };
