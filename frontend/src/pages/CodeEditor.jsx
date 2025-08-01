@@ -10,6 +10,7 @@ import Folder from '../components/Folder';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
 import useSecureSocket from '../socket';
+import { useSearchParams } from "react-router-dom";
 
 function CodeEditor() {
   // ✅ Always declare all hooks unconditionally
@@ -25,13 +26,16 @@ function CodeEditor() {
   const [code, setCode] = useState('');
   const [selectedFileContent, setSelectedFileContent] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [searchParams] = useSearchParams();
+
+
 
   const handleFileSelect = (path) => {
     setSelectedFile(JSON.stringify(path));
   };
 
   const fetchToken = async () => {
-    const token = await getToken({ template: "Aditya" , skipCache : true });
+    const token = await getToken({ template: "Aditya", skipCache: true });
     console.log(token)
     return token;
   };
@@ -41,8 +45,20 @@ function CodeEditor() {
       const token = await fetchToken();
       console.log("My token ", token);
       setToken(token);
+      const projectName = searchParams.get("projectName");
+      const projectId = searchParams.get("id");
+      console.log(projectId)
+      console.log(projectName)
       const response = await fetch("http://localhost:8000/files", {
-        headers: { "Authorization": `Bearer ${token}` },
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          projectId,
+          projectName
+        })
       });
 
 
@@ -83,7 +99,12 @@ function CodeEditor() {
     const getFileContent = async () => {
       if (!selectedFile) return;
       try {
-        const response = await fetch(`http://localhost:8000/files/content?path=${encodeURIComponent(selectedFile)}`, {
+
+        const projectName = searchParams.get("projectName");
+        const projectId = searchParams.get("id");
+         const url = `http://localhost:8000/files/content?path=${encodeURIComponent(selectedFile)}&projectName=${encodeURIComponent(projectName)}&projectId=${encodeURIComponent(projectId)}`;
+
+        const response = await fetch(url, {
           headers: { "Authorization": `Bearer ${token}` },
         });
         const result = await response.json();
@@ -110,7 +131,10 @@ function CodeEditor() {
   }, [selectedFile]);
 
   const runCodeFunction = async () => {
-    const response = await fetch(`http://localhost:8000/run?path=.${selectedFile}`, {
+            const projectName = searchParams.get("projectName");
+        const projectId = searchParams.get("id");
+      const url = `http://localhost:8000/run?path=${encodeURIComponent(selectedFile)}&projectName=${encodeURIComponent(projectName)}&projectId=${encodeURIComponent(projectId)}`;
+    const response = await fetch(url, {
       headers: { "Authorization": `Bearer ${token}` },
     });
     const data = await response.json();

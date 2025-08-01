@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from '@clerk/clerk-react';
+import { useSearchParams } from 'react-router-dom'; 
 
 export default function useSecureSocket() {
   const { getToken } = useAuth();
   const [socket, setSocket] = useState(null);
+   const [searchParams] = useSearchParams(); 
 
   useEffect(() => {
     const connect = async () => {
@@ -13,8 +15,11 @@ export default function useSecureSocket() {
       console.log('🎟️ JWT Token:', token);
       if (!token) return;
 
+            const projectId = searchParams.get('id');
+      const projectName = searchParams.get('projectName');
+
       const s = io('http://localhost:8000', {
-        auth: { token },
+        auth: { token , projectId , projectName },
         transports: ['websocket'],
       });
 

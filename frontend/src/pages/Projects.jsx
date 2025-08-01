@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import './Home.css';
-import {useUser}from '@clerk/clerk-react';
+import { useUser } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Projects = () => {
-  
   const { isLoaded, isSignedIn, user } = useUser();
   const [projects, setProjects] = useState([]);
   const [showMenu, setShowMenu] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [activeProjectId, setActiveProjectId] = useState(null);
+  const navigate = useNavigate();
 
   const handleCreateBlank = () => {
     setShowMenu(false);
     setShowModal(true);
   };
+
+  
 
   const createProject = () => {
     if (newProjectName.trim()) {
@@ -22,7 +26,23 @@ const Projects = () => {
       setNewProjectName('');
       setShowModal(false);
     }
+
+    console.log(projects);
   };
+
+  const handleDelete = (id) => {
+    setProjects(projects.filter(p => p.id !== id));
+    setActiveProjectId(null);
+  };
+
+const handleCode = (project) => {
+  const query = new URLSearchParams({
+    projectName: project.name,
+    id: project.id
+  }).toString();
+
+  navigate(`/code?${query}`);
+};
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -32,7 +52,6 @@ const Projects = () => {
     return <Navigate to="/" replace />;
   }
 
-
   return (
     <div className="home-container">
       <header>
@@ -41,8 +60,19 @@ const Projects = () => {
 
       <div className="project-list">
         {projects.map((project) => (
-          <div key={project.id} className="project-card">
+          <div
+            key={project.id}
+            className="project-card"
+            onClick={() => setActiveProjectId(project.id)}
+          >
             {project.name}
+
+            {activeProjectId === project.id && (
+              <div className="project-options">
+                <div onClick={() => handleCode(project)}>🧑‍💻 Code</div>
+                <div onClick={() => handleDelete(project.id)}>🗑️ Delete</div>
+              </div>
+            )}
           </div>
         ))}
 

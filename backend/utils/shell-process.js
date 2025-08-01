@@ -3,8 +3,8 @@ const pty = require('node-pty');
 const path = require('path');
 const fs = require('fs');
 
-function createPtyProcess(userId) {
-  const userDir = path.resolve(__dirname, `../User/${userId}`);
+function createPtyProcess(userDir) {
+  // const userDir = path.resolve(__dirname, `../User/${userId}`);
 
   // Ensure the user's folder exists
 

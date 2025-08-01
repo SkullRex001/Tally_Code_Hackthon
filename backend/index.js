@@ -18,7 +18,7 @@ async function authMiddleware(req, res, next) {
     try {
         const payload = await verifyToken(token, {
             issuer: "https://infinite-pangolin-83.clerk.accounts.dev",
-            authorizedParties: ["http://127.0.0.1:5173"], // 👈 same as socket
+            authorizedParties: ["http://127.0.0.1:5173"],
         });
         req.userId = payload.sub;
         next();
@@ -40,12 +40,20 @@ app.get('/health', (req, res) => {
     res.status(200).json({ message: "Everything is good🤗" })
 })
 
-app.get('/files', authMiddleware, async (req, res) => {
+app.post('/files', authMiddleware, async (req, res) => {
     const userId = req.userId;
     const userDir = `./User/${userId}`;
+    const { projectId, projectName } = req.body;
+    console.log(projectId)
+    console.log(projectName)
+
+    const sanitize = (name) => name.replace(/[^a-zA-Z0-9-_]/g, "_").substring(0, 50);
+    const folderName = `${sanitize(projectName)}-${projectId}`;
+    const projectDir = `./User/${userId}/${folderName}`; // ✅ Project-specific folder
+
     try {
         await fs.mkdir(userDir, { recursive: true });
-        const fileTree = await generateExplorerTree(`./User/${userId}`)
+        const fileTree = await generateExplorerTree(projectDir)
         return res.json({ tree: fileTree });
 
     } catch (error) {
@@ -58,11 +66,16 @@ app.get('/files', authMiddleware, async (req, res) => {
 
 app.get('/files/content', authMiddleware, async (req, res) => {
 
-   try {
+    try {
         const userId = req.userId;
-        const pathParam = req.query.path;
-        const sanitizedPath = pathParam.replace(/['"]/g, '');
-        const userFilePath = `./User/${userId}${sanitizedPath}`;
+        const { path: relPath, projectId, projectName } = req.query;
+        if (!relPath || !projectId || !projectName) {
+            return res.status(400).json({ message: "Missing required query parameters" });
+        }
+
+        const sanitizedPath = relPath.replace(/['"]/g, '');
+        const safeProjectFolder = `${projectName}-${projectId}`;
+        const userFilePath = path.join(__dirname, 'User', userId, safeProjectFolder, sanitizedPath);
 
         const content = await fs.readFile(userFilePath, 'utf-8');
         return res.json({ content });
@@ -76,14 +89,19 @@ app.get('/run', authMiddleware, async (req, res) => {
     try {
         const userId = req.userId;
         const selectedFilePath = req.query.path;
+            const projectId = req.query.projectId;
+    const projectName = req.query.projectName;
 
-        if (!selectedFilePath) {
-            throw new Error("Path query parameter is missing");
-        }
+    if (!selectedFilePath || !projectId || !projectName) {
+      return res.status(400).json({ message: "Missing path, projectId, or projectName in query" });
+    }
 
         // const fullPath = `./User/${userId}${selectedFilePath}`;
-        const fullPath = path.join(__dirname, 'User', userId, selectedFilePath);
-        const data = await init(fullPath);
+      
+        const sanitizedPath = selectedFilePath.replace(/['"]/g, '');
+        const safeProjectFolder = `${projectName}-${projectId}`;
+        const userFilePath = path.join(__dirname, 'User', userId, safeProjectFolder, sanitizedPath);
+        const data = await init(userFilePath );
 
         res.json({ data: data.stdout });
     } catch (error) {

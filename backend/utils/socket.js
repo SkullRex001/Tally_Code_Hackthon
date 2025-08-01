@@ -8,11 +8,16 @@ const { createPtyProcess } = require('./shell-process');
 
 function setupSocket(io) {
   io.use(async (socket, next) => {
-    const { token } = socket.handshake.auth;
+    const { token, projectId, projectName } = socket.handshake.auth;
 
     if (!token) {
       console.log("❌ No token received");
       return next(new Error("Authentication token missing"));
+    }
+
+    if (!projectId || !projectName) {
+      console.log("❌ Project details missing");
+      return next(new Error("Project details missing"));
     }
 
     try {
@@ -21,11 +26,16 @@ function setupSocket(io) {
         authorizedParties: ["http://127.0.0.1:5173"],
       });
 
-      socket.userId = payload.sub;
-       
 
-      // ✅ Create folder if it doesn't exist
-      const userDir = path.join(__dirname, '../User', socket.userId);
+
+      socket.userId = payload.sub;
+      console.log(payload);
+
+      const sanitize = (name) => name.replace(/[^a-zA-Z0-9-_]/g, "_").substring(0, 50);
+      const folderName = `${sanitize(projectName)}-${projectId}`;
+
+     const userDir = path.join(__dirname, '../User', socket.userId, folderName); 
+           socket.userDir = userDir;
       if (!fsSync.existsSync(userDir)) {
         fsSync.mkdirSync(userDir, { recursive: true });
       }
@@ -40,12 +50,12 @@ function setupSocket(io) {
 
   io.on('connection', (socket) => {
 
-    const ptyProcess = createPtyProcess(socket.userId);
+    const ptyProcess = createPtyProcess(socket.userDir);
 
 
     console.log('Client connected:', socket.id);
 
-    const userDir = path.join(__dirname, '../User', socket.userId);
+    const userDir = socket.userDir;
     console.log(userDir);
 
     // ✅ Watch this user's folder only

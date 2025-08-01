@@ -4,6 +4,7 @@ const cors = require('cors');
 const { Server: wsServer } = require('socket.io');
 
 const app = express();
+app.use(express.json());
 const io = new wsServer({
     cors: {
       origin: 'http://127.0.0.1:5173',
