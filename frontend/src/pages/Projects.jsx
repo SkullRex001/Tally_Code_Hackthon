@@ -32,11 +32,11 @@ const Projects = () => {
   };
 
 
-useEffect(() => {
+  useEffect(() => {
     const fetchProjects = async () => {
       if (!user?.id) return;
 
-      const token = await fetchToken(); 
+      const token = await fetchToken();
 
       try {
         const res = await fetch(`http://localhost:8000/projects?user_id=${user.id}`, {
@@ -60,7 +60,7 @@ useEffect(() => {
     };
 
     fetchProjects();
-  }, [user?.id , projects]);
+  }, [user?.id]);
 
 
 
@@ -84,12 +84,12 @@ useEffect(() => {
         })
       });
 
-      const newProject = await response.json(); 
+      const newProject = await response.json();
       console.log(newProject);
 
       setProjects(prev => [...prev, {
-        name: newProject.projectName,
-        id: newProject.projectId,
+        projectName: newProject.projectName,
+        projectId: newProject.projectId,
       }]);
       setNewProjectName('');
       setShowModal(false);
@@ -98,9 +98,36 @@ useEffect(() => {
     console.log(projects);
   };
 
-  const handleDelete = (id) => {
-    setProjects(projects.filter(p => p.id !== id));
-    setActiveProjectId(null);
+  const handleDelete = async (id) => {
+
+    try {
+      const user_id = user.id;
+      const token = await fetchToken();
+      const response = await fetch("http://localhost:8000/projects", {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user_id,
+          deleteProjectId: id,
+        })
+      });
+
+      const res = await response.json();
+      console.log(res);
+
+      setProjects(projects.filter(p => p.projectId !== id));
+      setActiveProjectId(null);
+
+    } catch (error) {
+
+      console.log(error);
+      return;
+
+    }
+
   };
 
   const handleCode = (project) => {
@@ -127,7 +154,7 @@ useEffect(() => {
       </header>
 
       <div className="project-list">
-        {projects?.map((project , index) => (
+        {projects?.map((project, index) => (
           <div
             key={index}
             className="project-card"

@@ -5,7 +5,7 @@ const { setupSocket } = require('./utils/socket')
 const { generateExplorerTree, init } = require('./utils/file-methods')
 const { clerkClient, requireAuth, getAuth } = require("@clerk/express")
 const path = require('path');
-const {createProjectForUser , getProjectsForUser} = require('./db/user')
+const { createProjectForUser, getProjectsForUser , deleteProjectsForUser } = require('./db/user')
 require('dotenv').config()
 
 const { verifyToken } = require("@clerk/backend");
@@ -90,19 +90,19 @@ app.get('/run', authMiddleware, async (req, res) => {
     try {
         const userId = req.userId;
         const selectedFilePath = req.query.path;
-            const projectId = req.query.projectId;
-    const projectName = req.query.projectName;
+        const projectId = req.query.projectId;
+        const projectName = req.query.projectName;
 
-    if (!selectedFilePath || !projectId || !projectName) {
-      return res.status(400).json({ message: "Missing path, projectId, or projectName in query" });
-    }
+        if (!selectedFilePath || !projectId || !projectName) {
+            return res.status(400).json({ message: "Missing path, projectId, or projectName in query" });
+        }
 
         // const fullPath = `./User/${userId}${selectedFilePath}`;
-      
+
         const sanitizedPath = selectedFilePath.replace(/['"]/g, '');
         const safeProjectFolder = `${projectName}-${projectId}`;
         const userFilePath = path.join(__dirname, 'User', userId, safeProjectFolder, sanitizedPath);
-        const data = await init(userFilePath );
+        const data = await init(userFilePath);
 
         res.json({ data: data.stdout });
     } catch (error) {
@@ -112,42 +112,64 @@ app.get('/run', authMiddleware, async (req, res) => {
 });
 
 app.post('/projects', async (req, res) => {
-  const { user_id, newProjectId, newProjectName } = req.body;
+    const { user_id, newProjectId, newProjectName } = req.body;
 
-  if (!user_id || !newProjectId || !newProjectName) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+    if (!user_id || !newProjectId || !newProjectName) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-  try {
-    const project = await createProjectForUser({
-      userId: user_id,
-      projectId: newProjectId,
-      projectName: newProjectName,
-    });
+    try {
+        const project = await createProjectForUser({
+            userId: user_id,
+            projectId: newProjectId,
+            projectName: newProjectName,
+        });
 
-    return res.status(201).json(project);
-  } catch (error) {
-    console.error("❌ Error in /projects:", error.message);
-    return res.status(500).json({ error: error.message || 'Server error' });
-  }
+        return res.status(201).json(project);
+    } catch (error) {
+        console.error("❌ Error in /projects:", error.message);
+        return res.status(500).json({ error: error.message || 'Server error' });
+    }
 });
 
 app.get('/projects', async (req, res) => {
-   const user_id = req.query.user_id;
-   console.log(user_id);
+    const user_id = req.query.user_id;
+    console.log(user_id);
 
-  if (!user_id) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+    if (!user_id) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-  try {
-    
-    const project = await getProjectsForUser({ userId: user_id});
+    try {
 
-    return res.status(201).json(project);
-  } catch (error) {
-    console.error("❌ Error in /projects:", error.message);
-    return res.status(500).json({ error: error.message || 'Server error' });
-  }
+        const project = await getProjectsForUser({ userId: user_id });
+
+        return res.status(201).json(project);
+    } catch (error) {
+        console.error("❌ Error in /projects:", error.message);
+        return res.status(500).json({ error: error.message || 'Server error' });
+    }
+});
+
+
+app.delete('/projects', async (req, res) => {
+    const { user_id,
+        deleteProjectId } = req.body;
+
+    console.log(user_id);
+
+    if (!user_id) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+
+        const project = await deleteProjectsForUser({ userId: user_id  , deleteProjectId});
+
+        return res.status(201).json(project);
+    } catch (error) {
+        console.error("❌ Error in /projects:", error.message);
+        return res.status(500).json({ error: error.message || 'Server error' });
+    }
 });
 
