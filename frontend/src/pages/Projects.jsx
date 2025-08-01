@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Home.css';
 import { useUser } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { hashProjectId } from '../utils/getRandomId';
+import { useAuth } from '@clerk/clerk-react';
+
 
 const Projects = () => {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -11,18 +14,83 @@ const Projects = () => {
   const [showModal, setShowModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [activeProjectId, setActiveProjectId] = useState(null);
+  const { getToken } = useAuth();
   const navigate = useNavigate();
+
+
+
+  const fetchToken = async () => {
+    const token = await getToken({ template: "Aditya", skipCache: true });
+    console.log(token)
+    return token;
+  };
+
 
   const handleCreateBlank = () => {
     setShowMenu(false);
     setShowModal(true);
   };
 
-  
 
-  const createProject = () => {
+useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user?.id) return;
+
+      const token = await fetchToken(); 
+
+      try {
+        const res = await fetch(`http://localhost:8000/projects?user_id=${user.id}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        console.log(data);
+
+        if (res.ok) {
+          setProjects(data); // expected: [{ projectName, projectId }]
+        } else {
+          console.error("Failed to fetch projects:", data.error);
+        }
+      } catch (err) {
+        console.error("❌ Error fetching projects:", err);
+      }
+    };
+
+    fetchProjects();
+  }, [user?.id , projects]);
+
+
+
+  const createProject = async () => {
     if (newProjectName.trim()) {
-      setProjects([...projects, { name: newProjectName.trim(), id: Date.now() }]);
+      const id = await hashProjectId(newProjectName);
+      const user_id = user.id;
+      const token = await fetchToken();
+
+
+      const response = await fetch("http://localhost:8000/projects", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user_id,
+          newProjectName,
+          newProjectId: id
+        })
+      });
+
+      const newProject = await response.json(); 
+      console.log(newProject);
+
+      setProjects(prev => [...prev, {
+        name: newProject.projectName,
+        id: newProject.projectId,
+      }]);
       setNewProjectName('');
       setShowModal(false);
     }
@@ -35,14 +103,14 @@ const Projects = () => {
     setActiveProjectId(null);
   };
 
-const handleCode = (project) => {
-  const query = new URLSearchParams({
-    projectName: project.name,
-    id: project.id
-  }).toString();
+  const handleCode = (project) => {
+    const query = new URLSearchParams({
+      projectName: project.projectName,
+      id: project.projectId
+    }).toString();
 
-  navigate(`/code?${query}`);
-};
+    navigate(`/code?${query}`);
+  };
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -59,18 +127,18 @@ const handleCode = (project) => {
       </header>
 
       <div className="project-list">
-        {projects.map((project) => (
+        {projects?.map((project , index) => (
           <div
-            key={project.id}
+            key={index}
             className="project-card"
-            onClick={() => setActiveProjectId(project.id)}
+            onClick={() => setActiveProjectId(project.projectId)}
           >
-            {project.name}
+            {project.projectName}
 
-            {activeProjectId === project.id && (
+            {activeProjectId === project.projectId && (
               <div className="project-options">
                 <div onClick={() => handleCode(project)}>🧑‍💻 Code</div>
-                <div onClick={() => handleDelete(project.id)}>🗑️ Delete</div>
+                <div onClick={() => handleDelete(project.projectId)}>🗑️ Delete</div>
               </div>
             )}
           </div>

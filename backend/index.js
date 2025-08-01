@@ -5,6 +5,7 @@ const { setupSocket } = require('./utils/socket')
 const { generateExplorerTree, init } = require('./utils/file-methods')
 const { clerkClient, requireAuth, getAuth } = require("@clerk/express")
 const path = require('path');
+const {createProjectForUser , getProjectsForUser} = require('./db/user')
 require('dotenv').config()
 
 const { verifyToken } = require("@clerk/backend");
@@ -109,3 +110,44 @@ app.get('/run', authMiddleware, async (req, res) => {
         res.json({ data: String(error.stderr) });
     }
 });
+
+app.post('/projects', async (req, res) => {
+  const { user_id, newProjectId, newProjectName } = req.body;
+
+  if (!user_id || !newProjectId || !newProjectName) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const project = await createProjectForUser({
+      userId: user_id,
+      projectId: newProjectId,
+      projectName: newProjectName,
+    });
+
+    return res.status(201).json(project);
+  } catch (error) {
+    console.error("❌ Error in /projects:", error.message);
+    return res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+
+app.get('/projects', async (req, res) => {
+   const user_id = req.query.user_id;
+   console.log(user_id);
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    
+    const project = await getProjectsForUser({ userId: user_id});
+
+    return res.status(201).json(project);
+  } catch (error) {
+    console.error("❌ Error in /projects:", error.message);
+    return res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+

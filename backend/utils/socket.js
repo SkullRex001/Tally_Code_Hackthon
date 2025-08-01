@@ -4,7 +4,7 @@ const fsSync = require('fs');
 const path = require('path');
 const { verifyToken } = require('@clerk/backend');
 const { createPtyProcess } = require('./shell-process');
-
+const {upsertUserFromPayload} = require("../db/user")
 
 function setupSocket(io) {
   io.use(async (socket, next) => {
@@ -21,10 +21,13 @@ function setupSocket(io) {
     }
 
     try {
+
       const payload = await verifyToken(token, {
         issuer: "https://infinite-pangolin-83.clerk.accounts.dev",
         authorizedParties: ["http://127.0.0.1:5173"],
       });
+
+      await upsertUserFromPayload(payload);
 
 
 
@@ -49,6 +52,8 @@ function setupSocket(io) {
   });
 
   io.on('connection', (socket) => {
+    
+    //if user is not is database save him
 
     const ptyProcess = createPtyProcess(socket.userDir);
 

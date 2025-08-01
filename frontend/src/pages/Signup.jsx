@@ -42,7 +42,7 @@ const Signup = () => {
             <SignOutButton>
               <button className="btn logout">Sign Out</button>
             </SignOutButton>
-            <button className='btn logout' onClick={handleRedirect}>Projects</button>
+            <button className='btn' onClick={handleRedirect}>Projects</button>
           </div>
         </div>
       </SignedIn>
