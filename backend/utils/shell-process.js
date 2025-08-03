@@ -3,7 +3,32 @@ const pty = require('node-pty');
 const path = require('path');
 const fs = require('fs');
 
-function createPtyProcess(userDir) {
+// function createPtyProcess(userDir) {
+//   // const userDir = path.resolve(__dirname, `../User/${userId}`);
+
+//   // Ensure the user's folder exists
+
+//   if (!fs.existsSync(userDir)) {
+//     fs.mkdirSync(userDir, { recursive: true });
+//   }
+
+//   const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+
+//   const ptyProcess = pty.spawn(shell, [], {
+//     name: 'xterm-color',
+//     cols: 80,
+//     rows: 30,
+//     cwd: userDir,
+//     env: process.env
+//   });
+
+//   return ptyProcess;
+// }
+
+// module.exports = { createPtyProcess };
+
+
+function createPtyProcess(userDir, container) {
   // const userDir = path.resolve(__dirname, `../User/${userId}`);
 
   // Ensure the user's folder exists
@@ -14,12 +39,11 @@ function createPtyProcess(userDir) {
 
   const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
-  const ptyProcess = pty.spawn(shell, [], {
-    name: 'xterm-color',
+  const ptyProcess = pty.spawn("docker", ["exec", "-it", container.id, "/bin/bash"], {
+    name: "xterm-color",
     cols: 80,
-    rows: 30,
+    rows: 24,
     cwd: userDir,
-    env: process.env
   });
 
   return ptyProcess;

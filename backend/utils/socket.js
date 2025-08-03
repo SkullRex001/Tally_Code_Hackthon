@@ -4,7 +4,11 @@ const fsSync = require('fs');
 const path = require('path');
 const { verifyToken } = require('@clerk/backend');
 const { createPtyProcess } = require('./shell-process');
-const {upsertUserFromPayload} = require("../db/user")
+const { upsertUserFromPayload } = require("../db/user");
+const Docker = require("dockerode");
+const {sandbox} = require("./docker-sandbox");
+
+const docker = new Docker();
 
 function setupSocket(io) {
   io.use(async (socket, next) => {
@@ -37,8 +41,8 @@ function setupSocket(io) {
       const sanitize = (name) => name.replace(/[^a-zA-Z0-9-_]/g, "_").substring(0, 50);
       const folderName = `${sanitize(projectName)}-${projectId}`;
 
-     const userDir = path.join(__dirname, '../User', socket.userId, folderName); 
-           socket.userDir = userDir;
+      const userDir = path.join(__dirname, '../User', socket.userId, folderName);
+      socket.userDir = userDir;
       if (!fsSync.existsSync(userDir)) {
         fsSync.mkdirSync(userDir, { recursive: true });
       }
@@ -51,19 +55,27 @@ function setupSocket(io) {
     }
   });
 
-  io.on('connection', (socket) => {
-    
-    //if user is not is database save him
+  io.on('connection', async (socket) => {
 
-    const ptyProcess = createPtyProcess(socket.userDir);
+    //if user is not is database save him
+    const userDir = socket.userDir;
+    const volumeName = path.basename(userDir);
+
+    const imageNane = "sandbox-node";
+
+    let container = await sandbox(volumeName , imageNane , userDir);
+
+   
+    //const ptyProcess = createPtyProcess(socket.userDir);
+    const ptyProcess = createPtyProcess(socket.userDir , container);
 
 
     console.log('Client connected:', socket.id);
 
-    const userDir = socket.userDir;
+
     console.log(userDir);
 
-    // ✅ Watch this user's folder only
+    //Bug: When I change file from termianl it does not apprear in text exitor until I send http requst again
     const watcher = chokidar.watch(userDir).on('all', (event, filePath) => {
       const relativePath = path.relative(userDir, filePath);
       io.to(socket.id).emit('file:refresh', relativePath);
